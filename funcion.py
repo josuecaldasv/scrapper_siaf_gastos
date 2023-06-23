@@ -182,8 +182,8 @@ def scrapper_siaf_gastos( anio ):
                             print( f'RUBROS: { nombre_rubro }' )
 
                             # Botón de programa
-                            programa_button = wait.until(EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnPrograma"]' ) ) )
-                            programa_button.click()
+                            programa_boton = wait.until(EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnPrograma"]' ) ) )
+                            programa_boton.click()
 
                             # Extraer tabla html
                             table_element = wait.until( EC.presence_of_element_located( ( By.XPATH, "//table[@class='Data']" ) ) )
