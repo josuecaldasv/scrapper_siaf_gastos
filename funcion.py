@@ -1,7 +1,5 @@
-
-## LIBRARIES:
-# ----------
-
+## LIBRARIES
+# ---
 
 # Selenium
 from selenium import webdriver
@@ -23,6 +21,7 @@ import itertools
 import os
 
 # Simulating human behavior
+import datetime
 import time
 from time import sleep
 import random
@@ -47,11 +46,13 @@ import urllib.request
 import requests
 from openpyxl import Workbook
 
-
 ## FUNCTION:
 # ---------
 
 def scrapper_siaf_gastos( anio ):
+    
+    # Fijar tiempo
+    start_time = time.time()
     
     # Fijar opciones
     options = Options()
@@ -64,7 +65,7 @@ def scrapper_siaf_gastos( anio ):
     url = 'https://apps5.mineco.gob.pe/transparencia/Navegador/default.aspx?y=2007&ap=ActProy'
     driver.get( url )
 
-    wait = WebDriverWait( driver, 60 )
+    wait = WebDriverWait( driver, 180 )
 
     frame = driver.find_element( By.ID, "frame0" )
     driver.switch_to.frame( frame )
@@ -107,6 +108,18 @@ def scrapper_siaf_gastos( anio ):
         time.sleep( 2 )
         region_nombre = region.find_element( By.XPATH, './td[2]' ).text.strip()
         print( f'REGIONES: { region_nombre }' )
+        
+        # Calcular el tiempo transcurrido y tiempo restante por región
+        if region_index > 0:
+            tiempo_transcurrido     = time.time() - start_time
+            iterationes_restantes   = len( regiones_lista ) - region_index
+            tiempo_restante         = tiempo_transcurrido / region_index * iterationes_restantes
+            
+            tiempo_transcurrido_str = str(datetime.timedelta( seconds = int( tiempo_transcurrido ) ) )
+            tiempo_restante_str     = str(datetime.timedelta( seconds = int( tiempo_restante ) ) )
+
+            print(f'Tiempo transcurrido: { tiempo_transcurrido_str } para la región { region_nombre }' )
+            print(f'Tiempo estimado restante aproximado: { tiempo_restante_str }' )
 
         # Iterar sobre municipalidades
         municipalidades_boton   = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnMunicipalidad"]' ) ) )
