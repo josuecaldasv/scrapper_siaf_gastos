@@ -65,7 +65,7 @@ def scrapper_siaf_gastos( anio ):
     url = 'https://apps5.mineco.gob.pe/transparencia/Navegador/default.aspx?y=2007&ap=ActProy'
     driver.get( url )
 
-    wait = WebDriverWait( driver, 180 )
+    wait = WebDriverWait( driver, 300 )
 
     frame = driver.find_element( By.ID, "frame0" )
     driver.switch_to.frame( frame )
