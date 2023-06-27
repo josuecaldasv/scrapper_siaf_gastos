@@ -49,7 +49,7 @@ from openpyxl import Workbook
 ## FUNCTION:
 # ---------
 
-def scrapper_siaf_gastos( anio ):
+def scrapper_siaf_gastos( anio, ruta_registro ):
     
     # Fijar tiempo
     start_time = time.time()
@@ -69,12 +69,6 @@ def scrapper_siaf_gastos( anio ):
 
     frame = driver.find_element( By.ID, "frame0" )
     driver.switch_to.frame( frame )
-    
-    # Crear el directorio en caso no exista
-    try:
-        os.mkdir( f'siaf_datos_{ anio }' )
-    except:
-        pass
 
     # Lista de tablas
     all_tables = []
@@ -89,165 +83,256 @@ def scrapper_siaf_gastos( anio ):
         driver.switch_to.frame( frame )
     else:
         pass
+    
+    with open( ruta_registro, 'w' ) as f:    
 
-    # Seleccionar botones de niveles de gobierno y gobiernos locales
-    niveles_gobierno  = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnTipoGobierno"]' ) ) )
-    niveles_gobierno.click()
+        # Seleccionar botones de niveles de gobierno y gobiernos locales
+        niveles_gobierno  = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnTipoGobierno"]' ) ) )
+        niveles_gobierno.click()
 
-    gobiernos_locales = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptData_ctl02_TD0"]' ) ) )
-    gobiernos_locales.click()
+        gobiernos_locales = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptData_ctl02_TD0"]' ) ) )
+        gobiernos_locales.click()
 
-    # Iterar sobre regiones
-    regiones_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnDepartamento"]' ) ) )
-    regiones_boton.click()
-    regiones_lista = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
+        # Iterar sobre regiones
+        regiones_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnDepartamento"]' ) ) )
+        regiones_boton.click()
+        regiones_lista = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
 
-    for region_index in range( len( regiones_lista ) ):
-        region = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ region_index ]
-        region.click()
-        time.sleep( 2 )
-        region_nombre = region.find_element( By.XPATH, './td[2]' ).text.strip()
-        print( f'REGIONES: { region_nombre }' )
-        
-        # Calcular el tiempo transcurrido y tiempo restante por región
-        if region_index > 0:
-            tiempo_transcurrido     = time.time() - start_time
-            iterationes_restantes   = len( regiones_lista ) - region_index
-            tiempo_restante         = tiempo_transcurrido / region_index * iterationes_restantes
-            
-            tiempo_transcurrido_str = str(datetime.timedelta( seconds = int( tiempo_transcurrido ) ) )
-            tiempo_restante_str     = str(datetime.timedelta( seconds = int( tiempo_restante ) ) )
-
-            print(f'Tiempo transcurrido: { tiempo_transcurrido_str } para la región { region_nombre }' )
-            print(f'Tiempo estimado restante aproximado: { tiempo_restante_str }' )
-
-        # Iterar sobre municipalidades
-        municipalidades_boton   = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnMunicipalidad"]' ) ) )
-        municipalidades_boton.click()
-        municipalidades_lista   = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
-
-        for municipalidad_index in range( len( municipalidades_lista ) ):
-            municipalidad = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ municipalidad_index ]
-            municipalidad.click()
+        for region_index in range( len( regiones_lista ) ):
+            region = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ region_index ]
+            region_nombre = region.find_element( By.XPATH, './td[2]' ).text.strip()
+            region.click()
             time.sleep( 2 )
-            municipalidad_nombre = municipalidad.find_element( By.XPATH, './td[2]' ).text.strip()
-            print( f'MUNICIPALIDADES { municipalidad_nombre }' )
+            print( f'REGIÓN: { region_nombre }' )
+            f.write(f'REGIÓN: { region_nombre }\n' )
 
-            # Iterar sobre genericas de gasto
-            genericas_gasto_boton   = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnGrupoGasto"]' ) ) )
-            genericas_gasto_boton.click()
-            genericas_gasto_lista   = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
+            # Iterar sobre municipalidades
+            municipalidades_boton   = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnMunicipalidad"]' ) ) )
+            municipalidades_boton.click()
+            municipalidades_lista   = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
 
-            for generica_gasto_index in range( len( genericas_gasto_lista ) ):
-                generica_gasto = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ generica_gasto_index ]
-                generica_gasto.click()
-                time.sleep( 2 )
-                generica_gasto_nombre = generica_gasto.find_element( By.XPATH, './td[2]' ).text.strip()
-                print( f'GENERICAS DE GASTO: { generica_gasto_nombre }' )
+            for municipalidad_index in range( len( municipalidades_lista ) ):
 
-                # Iterar sobre fuentes
-                fuentes_boton   = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnFuenteAgregada"]' ) ) )
-                fuentes_boton.click()
-                fuentes_lista   = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
+                try:                
+                    last_region_index        = region_index
+                    last_municipalidad_index = municipalidad_index
 
-                for fuente_index in range( len( fuentes_lista ) ):
-                    fuente = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ fuente_index ]
-                    fuente.click()
+                    municipalidad = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ municipalidad_index ]
+                    municipalidad_nombre = municipalidad.find_element( By.XPATH, './td[2]' ).text.strip()
+                    municipalidad.click()
                     time.sleep( 2 )
-                    fuente_nombre = fuente.find_element( By.XPATH, './td[2]' ).text.strip()
-                    print( f'FUENTES: { fuente_nombre }' )
+                    print( f'\nMUNICIPALIDAD: { municipalidad_nombre }\n' )
+                    f.write(f'\nMUNICIPALIDAD: { municipalidad_nombre }\n' )
 
-                    # Iterar sobre funciones
-                    funciones_boton   = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnFuncion"]' ) ) )
-                    funciones_boton.click()
-                    funciones_lista   = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
+                    # Iterar sobre genericas de gasto
+                    genericas_gasto_boton   = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnGrupoGasto"]' ) ) )
+                    genericas_gasto_boton.click()
+                    genericas_gasto_lista   = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
 
-                    for funcion_index in range( len( funciones_lista ) ):
-                        funcion = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ funcion_index ]
-                        funcion.click()
+                    for generica_gasto_index in range( len( genericas_gasto_lista ) ):
+                        generica_gasto = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ generica_gasto_index ]
+                        generica_gasto_nombre = generica_gasto.find_element( By.XPATH, './td[2]' ).text.strip()
+                        generica_gasto.click()
                         time.sleep( 2 )
-                        funcion_nombre = funcion.find_element( By.XPATH, './td[2]' ).text.strip()
-                        print( f'FUNCIONES: { funcion_nombre }' )
+                        print( f'GENERICA DE GASTO: { generica_gasto_nombre }' )
+                        f.write(f'GENERICA DE GASTO: { generica_gasto_nombre }\n' )
 
-                        # Iterar sobre rubros
-                        rubro_boton = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="ctl00_CPH1_BtnRubro"]')))
-                        rubro_boton.click()
-                        rubros_lista = driver.find_elements(By.XPATH, "//tr[contains(@id, 'tr')]")
+                        # Iterar sobre fuentes
+                        fuentes_boton   = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnFuenteAgregada"]' ) ) )
+                        fuentes_boton.click()
+                        fuentes_lista   = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
 
-                        for rubro_index in range( len( rubros_lista ) ):
-                            rubro = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ rubro_index ]
-                            rubro.click()
+                        for fuente_index in range( len( fuentes_lista ) ):
+                            fuente = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ fuente_index ]
+                            fuente_nombre = fuente.find_element( By.XPATH, './td[2]' ).text.strip()
+                            fuente.click()
                             time.sleep( 2 )
-                            nombre_rubro = rubro.find_element( By.XPATH, './td[2]' ).text.strip()
-                            print( f'RUBROS: { nombre_rubro }' )
+                            print( f'FUENTE: { fuente_nombre }' )
+                            f.write(f'FUENTE: { fuente_nombre }\n' )
 
-                            # Botón de programa
-                            programa_boton = wait.until(EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnPrograma"]' ) ) )
-                            programa_boton.click()
+                            # Iterar sobre funciones
+                            funciones_boton   = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnFuncion"]' ) ) )
+                            funciones_boton.click()
+                            funciones_lista   = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
 
-                            # Extraer tabla html
-                            table_element = wait.until( EC.presence_of_element_located( ( By.XPATH, "//table[@class='Data']" ) ) )
-                            table_html = table_element.get_attribute( 'outerHTML' )
-                            table_df = pd.read_html( table_html )[ 0 ]
+                            for funcion_index in range( len( funciones_lista ) ):
+                                funcion = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ funcion_index ]
+                                funcion_nombre = funcion.find_element( By.XPATH, './td[2]' ).text.strip()
+                                funcion.click()
+                                time.sleep( 2 )
+                                print( f'FUNCIÓN: { funcion_nombre }' )
+                                f.write(f'FUNCIÓN: { funcion_nombre }\n' )
 
-                            # Agregar columna "rubro"
-                            table_df[ 'rubro' ]             = nombre_rubro
-                            table_df[ 'funcion' ]           = funcion_nombre
-                            table_df[ 'fuente' ]            = fuente_nombre
-                            table_df[ 'generica_de_gasto' ] = generica_gasto_nombre
-                            table_df[ 'region' ]            = region_nombre
-                            table_df[ 'municipalidad' ]     = municipalidad_nombre
+                                # Iterar sobre rubros
+                                rubro_boton = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="ctl00_CPH1_BtnRubro"]')))
+                                rubro_boton.click()
+                                rubros_lista = driver.find_elements(By.XPATH, "//tr[contains(@id, 'tr')]")
 
-                            # Agregar tabla al listado
-                            all_tables.append( table_df )
+                                for rubro_index in range( len( rubros_lista ) ):
+                                    rubro = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )[ rubro_index ]
+                                    nombre_rubro = rubro.find_element( By.XPATH, './td[2]' ).text.strip()
+                                    rubro.click()
+                                    time.sleep( 2 )
+                                    print( f'RUBRO: { nombre_rubro }' )
+                                    f.write(f'RUBRO: { nombre_rubro }\n' )
 
-                            # Volver a rubro                      
-                            volver_rubro_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl08_TD0"]' ) ) )
-                            volver_rubro_boton.click()
+                                    # Botón de programa
+                                    programa_boton = wait.until(EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnPrograma"]' ) ) )
+                                    programa_boton.click()
 
-                        # Volver a funciones:
-                        volver_funciones_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl07_TD0"]' ) ) )
-                        volver_funciones_boton.click()
+                                    # Extraer tabla html
+                                    table_element = wait.until( EC.presence_of_element_located( ( By.XPATH, "//table[@class='Data']" ) ) )
+                                    table_html = table_element.get_attribute( 'outerHTML' )
+                                    table_df = pd.read_html( table_html )[ 0 ]
 
-                    # Volver a fuentes
-                    volver_fuentes_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl06_TD0"]' ) ) )
-                    volver_fuentes_boton.click()
+                                    # Agregar columna "rubro"
+                                    table_df[ 'region' ]            = region_nombre
+                                    table_df[ 'municipalidad' ]     = municipalidad_nombre
+                                    table_df[ 'generica_de_gasto' ] = generica_gasto_nombre                            
+                                    table_df[ 'fuente' ]            = fuente_nombre                            
+                                    table_df[ 'funcion' ]           = funcion_nombre
+                                    table_df[ 'rubro' ]             = nombre_rubro
 
-                # Volver a generica de gasto
-                volver_generica_gasto_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl05_TD0"]' ) ) )
-                volver_generica_gasto_boton.click()
+                                    # Renombrar columnas                       
+                                    table_df = table_df.rename( columns = {   
+                                                        0: 'marca',
+                                                        1: 'programa',
+                                                        2: 'pia',
+                                                        3: 'pim',
+                                                        4: 'ejecucion_compromiso',
+                                                        5: 'ejecucion_devengado',
+                                                        6: 'ejecucion_grado',
+                                                        7: 'porcentaje_avance',
+                                                        'rubro_': 'rubro',
+                                                        'funcion_': 'funcion',
+                                                        'fuente_': 'fuente',
+                                                        'generica_de_gasto_': 'generica_de_gasto',
+                                                        'region_': 'region',
+                                                        'municipalidad_': 'municipalidad' 
+                                    } )
 
-            # Volver a municipalidades
-            volver_municipalidades_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl04_TD0"]') ) )
-            volver_municipalidades_boton.click()
+                                    # Crear ubigeo
+                                    table_df[ 'ubigeo' ] = table_df[ 'municipalidad' ].str.split( ':' ).str[ 0 ].str[ :6 ]
+
+                                    # Reordenar columnas
+                                    table_df = table_df[ [ 'ubigeo', 'municipalidad', 'region', 'generica_de_gasto',
+                                                           'fuente', 'funcion', 'rubro', 'programa', 'porcentaje_avance', 
+                                                           'ejecucion_grado', 'ejecucion_devengado', 'ejecucion_compromiso',
+                                                           'pim', 'pia' ] ]
+
+                                    # Crear nombres para el directorio
+                                    region_nombre_p         = region_nombre.strip().replace( ' ', '_' ).replace( ':', '' )
+                                    municipalidad_nombre_p  = municipalidad_nombre.strip().replace( ' ', '_' ).replace( ':', '' )
+                                    generica_gasto_nombre_p = generica_gasto_nombre.strip().replace( ' ', '_' ).replace( ':', '' )
+                                    fuente_nombre_p         = fuente_nombre.strip().replace( ' ', '_' ).replace( ':', '' )
+                                    funcion_nombre_p        = funcion_nombre.strip().replace( ' ', '_' ).replace( ':', '' )
+                                    nombre_rubro_p          = nombre_rubro.strip().replace( ' ', '_' ).replace( ':', '' )
+
+                                    # Renombrar fuentes para directorio
+                                    fuente_ab = "DEF"
+                                    if fuente_nombre   == "1: RECURSOS ORDINARIOS":
+                                        fuente_ab       = "F1"
+                                    elif fuente_nombre == "2: RECURSOS DIRECTAMENTE RECAUDADOS":
+                                        fuente_ab       = "F2"
+                                    elif fuente_nombre == "3: RECURSOS POR OPERACIONES OFICIALES DE CREDITO":
+                                        fuente_ab       = "F3"
+                                    elif fuente_nombre == "4: DONACIONES Y TRANSFERENCIAS":
+                                        fuente_ab       = "F4"
+                                    elif fuente_nombre == "5: RECURSOS DETERMINADOS":
+                                        fuente_ab       = "F5"
+
+                                    # Guardar files
+                                    folder_path = os.path.join( f'siaf_datos_{ anio }', region_nombre_p, municipalidad_nombre_p )
+                                    os.makedirs( folder_path, exist_ok = True )
+                                    file_path   = os.path.join( folder_path, f'{ fuente_ab }_{ funcion_nombre_p }_{ nombre_rubro_p }.xlsx' )
+                                    table_df.to_excel( file_path )
+                                    
+                                    print( f'ARCHIVO: { file_path }' )
+                                    f.write(f'ARCHIVO: { file_path }\n' )
+
+                                    # Volver a rubro                      
+                                    volver_rubro_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl08_TD0"]' ) ) )
+                                    volver_rubro_boton.click()
+
+                                # Volver a funciones:
+                                volver_funciones_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl07_TD0"]' ) ) )
+                                volver_funciones_boton.click()
+
+                            # Volver a fuentes
+                            volver_fuentes_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl06_TD0"]' ) ) )
+                            volver_fuentes_boton.click()
+
+                        # Volver a generica de gasto
+                        volver_generica_gasto_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl05_TD0"]' ) ) )
+                        volver_generica_gasto_boton.click()
+
+                    # Volver a municipalidades
+                    volver_municipalidades_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl04_TD0"]') ) )
+                    volver_municipalidades_boton.click()
+
+                except Exception as e:
+
+                    print( '\nLa página web colapsó', str( e ) )
+                    print( 'Reiniciando desde la última municipalidad scrapeada.\n' )
+                    f.write('\nLa página web colapsó' ) 
+                    f.write('Reiniciando desde la última municipalidad scrapeada.\n' ) 
+
+
+                    # Cerrar sesión y reiniciar el navegador
+                    driver.quit()
+                    time.sleep( 600 )
+                    driver = webdriver.Chrome(service = service )
+                    driver.maximize_window()
+                    driver.get( url )
+                    wait = WebDriverWait( driver, 300 )
+
+                    frame = driver.find_element( By.ID, "frame0" )
+                    driver.switch_to.frame( frame )
+
+                    # Volver a seleccionar el año y navegar hasta la última región scrappeada
+                    seleccionar_anio = Select(driver.find_element( By.ID, "ctl00_CPH1_DrpYear" ) )
+                    seleccionar_anio.select_by_value(f'{ anio }')
+
+                    if anio != '2007':
+                        frame = driver.find_element( By.ID, "frame0" )
+                        driver.switch_to.frame( frame )
+
+                    # Seleccionar botones de niveles de gobierno y gobiernos locales
+                    niveles_gobierno  = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnTipoGobierno"]' ) ) )
+                    niveles_gobierno.click()
+
+                    gobiernos_locales = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptData_ctl02_TD0"]' ) ) )
+                    gobiernos_locales.click()
+
+                    # Navegar hasta la última región scrappeada
+                    regiones_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnDepartamento"]' ) ) )
+                    regiones_boton.click()
+                    regiones_lista = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
+                    for i in range( last_region_index + 1 ):
+                        region = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]")[ i ]
+                        region_nombre = region.find_element( By.XPATH, './td[2]' ).text.strip()
+                        region.click()
+                        time.sleep( 2 )
+                        print(f'REGIÓN (Exception): { region_nombre }')
+                        f.write(f'REGIÓN (Exception): { region_nombre }\n' )
+
+                    # Navegar hasta la última municipalidad scrappeada
+                        municipalidades_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnMunicipalidad"]' ) ) )
+                        municipalidades_boton.click()
+                        municipalidades_lista = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
+                        for i in range( last_municipalidad_index + 1 ):
+                            municipalidad = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]")[ i ]
+                            municipalidad_nombre = municipalidad.find_element( By.XPATH, './td[2]' ).text.strip()
+                            time.sleep( 2 )
+                            print( f'\nMUNICIPALIDAD (Exception): { municipalidad_nombre }\n' )
+                            f.write( f'\nMUNICIPALIDAD (Exception): { municipalidad_nombre }\n' )
+
+                        continue
 
         # Volver a regiones
         volver_regiones_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl03_TD0"]' ) ) )
         volver_regiones_boton.click()
-
-    # Concatenar todas las tablas
-    final_table = pd.concat( all_tables, axis = 0 ).reset_index( drop = True )
-
-    final_table = final_table.rename( columns = {   0: 'marca',
-                                                    1: 'programa',
-                                                    2: 'pia',
-                                                    3: 'pim',
-                                                    4: 'ejecucion_compromiso',
-                                                    5: 'ejecucion_devengado',
-                                                    6: 'ejecucion_grado',
-                                                    7: 'porcentaje_avance',
-                                                    'rubro_': 'rubro',
-                                                    'funcion_': 'funcion',
-                                                    'fuente_': 'fuente',
-                                                    'generica_de_gasto_': 'generica_de_gasto',
-                                                    'region_': 'region',
-                                                    'municipalidad_': 'municipalidad' } )
-
-    final_table[ 'ubigeo' ] = final_table[ 'municipalidad' ].str.split( ':' ).str[ 0 ].str[ :6 ]
-
-    final_table = final_table[ [ 'ubigeo', 'municipalidad', 'region', 'generica_de_gasto',
-                                 'fuente', 'funcion', 'rubro', 'programa', 'porcentaje_avance', 
-                                 'ejecucion_grado', 'ejecucion_devengado', 'ejecucion_compromiso',
-                                 'pim', 'pia' ] ]
-    
-    final_table.to_excel( f'siaf_datos_{ anio }/siaf_datos{ anio }.xlsx' )
+        
+    # Cerrar sesión del driver
+    f.close()
+    driver.quit()
