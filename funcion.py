@@ -65,7 +65,7 @@ def scrapper_siaf_gastos( anio, ruta_registro ):
     url = 'https://apps5.mineco.gob.pe/transparencia/Navegador/default.aspx?y=2007&ap=ActProy'
     driver.get( url )
 
-    wait = WebDriverWait( driver, 300 )
+    wait = WebDriverWait( driver, 15 )
 
     frame = driver.find_element( By.ID, "frame0" )
     driver.switch_to.frame( frame )
@@ -228,23 +228,42 @@ def scrapper_siaf_gastos( anio, ruta_registro ):
                                     funcion_nombre_p        = funcion_nombre.strip().replace( ' ', '_' ).replace( ':', '' )
                                     nombre_rubro_p          = nombre_rubro.strip().replace( ' ', '_' ).replace( ':', '' )
 
+                                    # Renombrar genericas para directorio
+                                    generica_ab                 = "GDEF"
+                                    if generica_gasto_nombre   == "5-1: PERSONAL Y OBLIGACIONES SOCIALES":
+                                        generica_ab             = "G5_1"
+                                    elif generica_gasto_nombre == "5-2: OBLIGACIONES PREVISIONALES":
+                                        generica_ab             = "G5_2"
+                                    elif generica_gasto_nombre == "5-3: BIENES Y SERVICIOS":
+                                        generica_ab             = "G5_3"
+                                    elif generica_gasto_nombre == "5-4: OTROS GASTOS CORRIENTES":
+                                        generica_ab             = "G5_4"                                        
+                                    elif generica_gasto_nombre == "6-5: INVERSIONES":
+                                        generica_ab             = "G6_5"                                        
+                                    elif generica_gasto_nombre == "6-7: OTROS GASTOS DE CAPITAL":
+                                        generica_ab             = "G6_7"                                        
+                                    elif generica_gasto_nombre == "7-8: INTERESES Y CARGOS DE LA DEUDA":
+                                        generica_ab             = "G7_8"                                        
+                                    elif generica_gasto_nombre == "7-9: AMORTIZACION DE LA DEUDA":
+                                        generica_ab             = "G7_9"
+                               
+                                    
                                     # Renombrar fuentes para directorio
-                                    fuente_ab = "DEF"
-                                    if fuente_nombre   == "1: RECURSOS ORDINARIOS":
-                                        fuente_ab       = "F1"
-                                    elif fuente_nombre == "2: RECURSOS DIRECTAMENTE RECAUDADOS":
-                                        fuente_ab       = "F2"
-                                    elif fuente_nombre == "3: RECURSOS POR OPERACIONES OFICIALES DE CREDITO":
-                                        fuente_ab       = "F3"
-                                    elif fuente_nombre == "4: DONACIONES Y TRANSFERENCIAS":
-                                        fuente_ab       = "F4"
-                                    elif fuente_nombre == "5: RECURSOS DETERMINADOS":
-                                        fuente_ab       = "F5"
-
+                                    fuente_ab                   = "FDEF"
+                                    if fuente_nombre           == "1: RECURSOS ORDINARIOS":
+                                        fuente_ab               = "F1"
+                                    elif fuente_nombre         == "2: RECURSOS DIRECTAMENTE RECAUDADOS":
+                                        fuente_ab               = "F2"
+                                    elif fuente_nombre         == "3: RECURSOS POR OPERACIONES OFICIALES DE CREDITO":
+                                        fuente_ab               = "F3"
+                                    elif fuente_nombre         == "4: DONACIONES Y TRANSFERENCIAS":
+                                        fuente_ab               = "F4"
+                                    elif fuente_nombre         == "5: RECURSOS DETERMINADOS":
+                                        fuente_ab               = "F5"                                                                                                                   
                                     # Guardar files
                                     folder_path = os.path.join( f'siaf_datos_{ anio }', region_nombre_p, municipalidad_nombre_p )
                                     os.makedirs( folder_path, exist_ok = True )
-                                    file_path   = os.path.join( folder_path, f'{ fuente_ab }_{ funcion_nombre_p }_{ nombre_rubro_p }.xlsx' )
+                                    file_path   = os.path.join( folder_path, f'{ generica_ab }_{ fuente_ab }_{ funcion_nombre_p }_{ nombre_rubro_p }.xlsx' )
                                     table_df.to_excel( file_path )
                                     
                                     print( f'ARCHIVO: { file_path }' )
@@ -274,17 +293,17 @@ def scrapper_siaf_gastos( anio, ruta_registro ):
 
                     print( '\nLa página web colapsó', str( e ) )
                     print( 'Reiniciando desde la última municipalidad scrapeada.\n' )
-                    f.write('\nLa página web colapsó' ) 
+                    f.write('\nLa página web colapsó\n' ) 
                     f.write('Reiniciando desde la última municipalidad scrapeada.\n' ) 
 
 
                     # Cerrar sesión y reiniciar el navegador
                     driver.quit()
-                    time.sleep( 600 )
+                    # time.sleep( 600 )
                     driver = webdriver.Chrome(service = service )
                     driver.maximize_window()
                     driver.get( url )
-                    wait = WebDriverWait( driver, 300 )
+                    wait = WebDriverWait( driver, 15 )
 
                     frame = driver.find_element( By.ID, "frame0" )
                     driver.switch_to.frame( frame )
@@ -317,21 +336,21 @@ def scrapper_siaf_gastos( anio, ruta_registro ):
                         f.write(f'REGIÓN (Exception): { region_nombre }\n' )
 
                     # Navegar hasta la última municipalidad scrappeada
-                        municipalidades_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnMunicipalidad"]' ) ) )
-                        municipalidades_boton.click()
-                        municipalidades_lista = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
-                        for i in range( last_municipalidad_index + 1 ):
-                            municipalidad = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]")[ i ]
-                            municipalidad_nombre = municipalidad.find_element( By.XPATH, './td[2]' ).text.strip()
-                            time.sleep( 2 )
-                            print( f'\nMUNICIPALIDAD (Exception): { municipalidad_nombre }\n' )
-                            f.write( f'\nMUNICIPALIDAD (Exception): { municipalidad_nombre }\n' )
+                    municipalidades_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_BtnMunicipalidad"]' ) ) )
+                    municipalidades_boton.click()
+                    municipalidades_lista = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]" )
+                    for i in range( last_municipalidad_index + 1 ):
+                        municipalidad = driver.find_elements( By.XPATH, "//tr[contains(@id, 'tr')]")[ i ]
+                        municipalidad_nombre = municipalidad.find_element( By.XPATH, './td[2]' ).text.strip()
+                        time.sleep( 2 )
+                        print( f'\nMUNICIPALIDAD (Exception): { municipalidad_nombre }\n' )
+                        f.write( f'\nMUNICIPALIDAD (Exception): { municipalidad_nombre }\n' )
 
-                        continue
+                    continue
 
-        # Volver a regiones
-        volver_regiones_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl03_TD0"]' ) ) )
-        volver_regiones_boton.click()
+            # Volver a regiones
+            volver_regiones_boton = wait.until( EC.element_to_be_clickable( ( By.XPATH, '//*[@id="ctl00_CPH1_RptHistory_ctl03_TD0"]' ) ) )
+            volver_regiones_boton.click()
         
     # Cerrar sesión del driver
     f.close()
