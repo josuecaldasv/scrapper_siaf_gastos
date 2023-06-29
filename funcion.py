@@ -221,49 +221,17 @@ def scrapper_siaf_gastos( anio, ruta_registro ):
                                                            'pim', 'pia' ] ]
 
                                     # Crear nombres para el directorio
-                                    region_nombre_p         = region_nombre.strip().replace( ' ', '_' ).replace( ':', '' )
-                                    municipalidad_nombre_p  = municipalidad_nombre.strip().replace( ' ', '_' ).replace( ':', '' )
-                                    generica_gasto_nombre_p = generica_gasto_nombre.strip().replace( ' ', '_' ).replace( ':', '' )
-                                    fuente_nombre_p         = fuente_nombre.strip().replace( ' ', '_' ).replace( ':', '' )
-                                    funcion_nombre_p        = funcion_nombre.strip().replace( ' ', '_' ).replace( ':', '' )
-                                    nombre_rubro_p          = nombre_rubro.strip().replace( ' ', '_' ).replace( ':', '' )
-
-                                    # Renombrar genericas para directorio
-                                    generica_ab                 = "GDEF"
-                                    if generica_gasto_nombre   == "5-1: PERSONAL Y OBLIGACIONES SOCIALES":
-                                        generica_ab             = "G5_1"
-                                    elif generica_gasto_nombre == "5-2: OBLIGACIONES PREVISIONALES":
-                                        generica_ab             = "G5_2"
-                                    elif generica_gasto_nombre == "5-3: BIENES Y SERVICIOS":
-                                        generica_ab             = "G5_3"
-                                    elif generica_gasto_nombre == "5-4: OTROS GASTOS CORRIENTES":
-                                        generica_ab             = "G5_4"                                        
-                                    elif generica_gasto_nombre == "6-5: INVERSIONES":
-                                        generica_ab             = "G6_5"                                        
-                                    elif generica_gasto_nombre == "6-7: OTROS GASTOS DE CAPITAL":
-                                        generica_ab             = "G6_7"                                        
-                                    elif generica_gasto_nombre == "7-8: INTERESES Y CARGOS DE LA DEUDA":
-                                        generica_ab             = "G7_8"                                        
-                                    elif generica_gasto_nombre == "7-9: AMORTIZACION DE LA DEUDA":
-                                        generica_ab             = "G7_9"
-                               
-                                    
-                                    # Renombrar fuentes para directorio
-                                    fuente_ab                   = "FDEF"
-                                    if fuente_nombre           == "1: RECURSOS ORDINARIOS":
-                                        fuente_ab               = "F1"
-                                    elif fuente_nombre         == "2: RECURSOS DIRECTAMENTE RECAUDADOS":
-                                        fuente_ab               = "F2"
-                                    elif fuente_nombre         == "3: RECURSOS POR OPERACIONES OFICIALES DE CREDITO":
-                                        fuente_ab               = "F3"
-                                    elif fuente_nombre         == "4: DONACIONES Y TRANSFERENCIAS":
-                                        fuente_ab               = "F4"
-                                    elif fuente_nombre         == "5: RECURSOS DETERMINADOS":
-                                        fuente_ab               = "F5"                                                                                                                   
+                                    region_p                = region_nombre.split( ':' )[ 0 ].strip()
+                                    ubigeo_p                = municipalidad_nombre.strip().split( ':' )[ 0 ][ :6 ]
+                                    generica_p              = 'GN' + generica_gasto_nombre.split( ':' )[ 0 ].strip()
+                                    fuente_p                = 'FT' + fuente_nombre.split( ':' )[ 0 ].strip()
+                                    funcion_p               = 'FN' + funcion_nombre.strip().split( ':' )[ 0 ].strip()
+                                    rubro_p                 = 'RB' + nombre_rubro.strip().split( ':' )[ 0 ].strip()
+                                                                                                             
                                     # Guardar files
-                                    folder_path = os.path.join( f'siaf_datos_{ anio }', region_nombre_p, municipalidad_nombre_p )
+                                    folder_path = os.path.join( f'data_{ anio }', region_p, ubigeo_p )
                                     os.makedirs( folder_path, exist_ok = True )
-                                    file_path   = os.path.join( folder_path, f'{ generica_ab }_{ fuente_ab }_{ funcion_nombre_p }_{ nombre_rubro_p }.xlsx' )
+                                    file_path   = os.path.join( folder_path, f'{ generica_p }_{ fuente_p }_{ funcion_p }_{ rubro_p }.xlsx' )
                                     table_df.to_excel( file_path )
                                     
                                     print( f'ARCHIVO: { file_path }' )
@@ -293,9 +261,8 @@ def scrapper_siaf_gastos( anio, ruta_registro ):
 
                     print( '\nLa página web colapsó', str( e ) )
                     print( 'Reiniciando desde la última municipalidad scrapeada.\n' )
-                    f.write('\nLa página web colapsó\n' ) 
+                    f.write('\nLa página web colapsó ' + str( e ) + '\n' ) 
                     f.write('Reiniciando desde la última municipalidad scrapeada.\n' ) 
-
 
                     # Cerrar sesión y reiniciar el navegador
                     driver.quit()
